@@ -18,7 +18,21 @@ import math
 # Unpickling city coordinates dataframe
 westCoastDF = pd.read_pickle('westCoastCities.pkl')
 
+""" ------------------------------- Create main GUI window and sub-windows ------------------------------------"""
+#creates, names, and sizes window for the app. Currently resizing the app messes with the city labels
+#which will need to be fixed in the future.
+window = tk.Tk()
+window.title("Breeze Route")
+window.geometry("1000x800")
+window.resizable(False, False) #Disable resizing for now bc then the map coordinates need to be change
 
+# Create left frame that will display map image
+left_frame = tk.Frame(window, width=800, height=800)  # Make the left frame bigger
+left_frame.pack(side="left", fill="both", expand=True)
+
+#Create right frame that will display user buttons/sliders
+right_frame = tk.Frame(window, width=200, height=800)  # Make the right frame smaller
+right_frame.pack(side="right", fill="y")
 
 """ ------------------------------- City Object --------------------------------------------------"""
 # display map coordinates in console when clicked - helpful for moving city name buttons
