@@ -102,3 +102,36 @@ def bearingAngle(cityCoordsA, cityCoordsB):
     bearing = (math.degrees(math.atan2(x, y)) + 360) % 360
     
     return bearing
+
+
+def bearingPenalty(bearingToStop, bearingToDest):
+    """
+    This function takes in the bearing required to get from the current location to the final stop and compares it to the bearing required to get from the current stop to a direct connection city.  Using the differences in the bearing angles, a penalty is generated depending on whether the bearing to the direct connection city is bringing you closer to the target city.
+    :param p1: bearingToStop
+    :type p1: float (in degrees)
+    :param p2: bearingToDest
+    :type p2: float (in degrees)
+    :return: penalty factor as float.
+    """
+    # Calculating difference in bearing angle between the ideal bearing (directly toward destination) and the bearing that takes you to the city being evaluated.
+    diff = abs(bearingToDest - bearingToStop)
+    
+    # if the difference is greater than 180 deg, it needs to be calculated from the other direction (CCW rather than CW) since we care only about difference w.r.t. the ideal bearing, not whether we are deviating from it in the CW direction or CCW direction.
+    if diff > 180:
+        diff = 360 - diff
+    
+    # Applying a penalty for bearing differences that are generally sending the user closer to the destination.        
+    if diff <= 90:
+        penaltyMultiplier = (diff / 180) + 1
+    
+    # Applying a harsher penalty for bearing differences that are generally sending the user away from the destination in the first 45 degrees of the backwards direction.    
+    elif diff <= 135:
+        print('Moving Backwards in 90-135 deg range')
+        penaltyMultiplier = (diff / 180) + 1.5
+    
+    # Applying the harshest penalty for bearing differences that are generally sending the user backwards w.r.t. the destination in the remaining 45 degrees.    
+    else:
+        print('Moving Backwards in 135-180 deg range')
+        penaltyMultiplier = (diff / 180) + 2
+        
+    return penaltyMultiplier
