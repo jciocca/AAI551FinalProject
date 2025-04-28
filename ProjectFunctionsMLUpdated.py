@@ -307,3 +307,25 @@ def optRoute(coordsDF, dcMatrix, current, destination):
 
     else:
         return totalDistR, routeR
+
+
+def weatherSensitivity():
+    """
+    This function prompts the users to provide an input from 1 to 5 corresponding to their willingness to drive through bad weather.  The lower the number, the less willing.
+    :return: integer of weather sensitivity
+    """
+    # setting lower and upper bounds of weather scale and then generating a range of integers between those bounds
+    scaleMin = 1
+    scaleMax = 5
+    scale = range(scaleMin, scaleMax + 1)
+
+    # Prompting the user to provide a willingness value corresponding to how willing they are to driving in bad weather.
+    weatherSensitivity = int(input(f'On a scale of {scaleMin} to {scaleMax}, how willing are you to drive in bad weather?\n{scaleMin} is least willing and {scaleMax} is most willing.\nSelection: '))
+
+    # checking to make sure that the willingness score in the allowable range of values.
+    while weatherSensitivity not in scale:
+        print(f'{weatherSensitivity} is not a valid selection.  Please try again')
+        weatherSensitivity = int(input(
+            f'On a scale of {scaleMin} to {scaleMax}, how willing are you to drive in bad weather?\n{scaleMin} is least willing and {scaleMax} is most willing.\nSelection: '))
+
+    return weatherSensitivity
