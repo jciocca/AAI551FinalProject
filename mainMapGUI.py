@@ -326,5 +326,19 @@ quitButton = (tk.Button
             ))
 quitButton.place(relx=0.8, rely=.95, anchor="center")
 
+""" ------------------------------- Bottom Output Template----------------------------------------------"""
+#Creates an empty label ONCE that will be updated as needed when confirm button is clicked
+outputText = (tk.Label
+    (
+        right_frame,
+        text='Choose a route to see your result.',
+        wraplength=200,
+        bg="#e6ada5",
+        font=("Helvetica", 10, "bold"),
+        justify="left", #Text in label is left aligned
+        anchor = "w" #Anchor the entire label to the left
+    ))
+outputText.place(relx=0.0, rely=0.75, anchor="w")
+
 """ ------------------------------- Run program -----------------------------------------------------"""
 window.mainloop()
