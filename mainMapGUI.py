@@ -34,6 +34,25 @@ left_frame.pack(side="left", fill="both", expand=True)
 right_frame = tk.Frame(window, width=200, height=800)  # Make the right frame smaller
 right_frame.pack(side="right", fill="y")
 
+""" ------------------------------- Load Map to left frame -----------------------------------------"""
+# Load and crop map image
+image_path = "InterstateHwyMap.png"
+image = Image.open(image_path)
+crop_area = (0, 0, 750, 800)
+image = image.crop(crop_area)
+#image = image.resize((600, 795)) #if the image needs to be blown up we will use this
+photo = ImageTk.PhotoImage(image)
+
+#assigns map as left background on a canvas so the arrows can also be generated
+canvas = tk.Canvas(left_frame, width=photo.width(), height=photo.height())
+canvas.pack()
+canvas.create_image(0, 0, anchor="nw", image=photo)
+
+#opens arrow image and is supposed to convert it so background is clear, however it does not do that
+arrow_img = Image.open("arrow_red.png").convert("RGBA").resize((40, 20))
+canvas.image_refs = []  # to store arrow images and prevent GC
+arrow_drawer = createArrow.ArrowDrawer(canvas)  # pass in the map canvas to the arrowdrawer
+
 """ ------------------------------- City Object --------------------------------------------------"""
 # display map coordinates in console when clicked - helpful for moving city name buttons
 def print_mouse_coordinates(event):
