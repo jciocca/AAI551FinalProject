@@ -76,3 +76,29 @@ def fillDCMatrix(dcDict):
             df.at[outerkey, innerKey] = distance
 
     return df
+
+
+def bearingAngle(cityCoordsA, cityCoordsB):
+    """
+    This function takes in 2 cityCoords class objects, uses the class functions to obtain their latitudes and longitudes in radians, then calculates the bearing angle from A to B.
+    :param p1: cityCoordsA
+    :type p1: cityCoords class object
+    :param p2: cityCoordsB
+    :type p2: cityCoords class object
+    :return: bearing angle in degrees.
+    """    
+    #converting coordinates from degrees to radians using cityCoords class functions
+    longA = cityCoordsA.longRad()
+    latA = cityCoordsA.latRad()
+    longB = cityCoordsB.longRad()
+    latB = cityCoordsB.latRad()
+    
+    # Calculating difference of longitudes
+    deltaL = longB - longA   
+    
+    # Calculating bearing angle from point A to point B
+    x = math.cos(latB) * math.sin(deltaL)    
+    y = (math.cos(latA) * math.sin(latB)) - (math.sin(latA) * math.cos(latB) * math.cos(deltaL))    
+    bearing = (math.degrees(math.atan2(x, y)) + 360) % 360
+    
+    return bearing
