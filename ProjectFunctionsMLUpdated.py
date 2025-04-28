@@ -329,3 +329,96 @@ def weatherSensitivity():
             f'On a scale of {scaleMin} to {scaleMax}, how willing are you to drive in bad weather?\n{scaleMin} is least willing and {scaleMax} is most willing.\nSelection: '))
 
     return weatherSensitivity
+
+
+def routeWeather(sliderValue):
+    """
+    This function takes in the user's slider value for willingness to drive through bad weather.  Then it randomly generates a number corresponding to weather severity.  The slider value and the weather severity are used in a mathematical function to calculate the weather penalty factor of a given route.
+    :param p1: sliderValue.
+    :type p1: integer (1-5).
+    :return: float of weather penalty factor.
+    """
+    # initializing lower and upper bounds of weather event severity
+    scaleMin = 1
+    scaleMax = 5
+
+    # calculating the number of increments between the upper and lower bounds
+    increments = (scaleMax + 1) - scaleMin
+    # randomly generating the severity of weather in the range of the lower and upper bounds inclusively.
+    forecast = random.randrange(1, increments + 1)
+
+    # list comprehension to create list of coefficient starting from the min and increasing by the step size for the number of increments
+    minCoeff = 1.25
+    stepSize = 0.05
+    coeff = [minCoeff + (stepSize * x) for x in range(increments)]
+    # reversing list since 1 corresponds to least willing to drive in bad weather and thus requiring the largest coefficient
+    coeff.reverse()
+    # mathematical function to calculate the weather penalty.  It is exponential in nature to increasingly penalize weather as it gets worse.  Designed to never go below 1 since this will eventually be multiplied by the routes distance.  Always produces 1, regardless of user's willingness to drive in bad weather if the randomly generated weather is lowest value (1) since that corresponds to perfect weather.
+    weatherPenalty = (1 / coeff[sliderValue - 1]) * (coeff[sliderValue - 1] ** forecast)
+
+    return weatherPenalty
+
+
+def weatherMatrix(dcDict, sliderValue):
+    """
+    This function takes in a dictionary of direct connection data and the user's slider value for willingness to drive through bad weather.  Then it calculates the weather penalty factor for each direct connection route and updates the dataframe to store the value for each direct connection.
+    :param p1: dcDict.
+    :type p1: dictionary.
+    :param p2: sliderValue.
+    :type p2: integer (1-5).
+    :return: dataframe of weather penalty factors.
+    """
+    # calling function to create dataframe of direct connections using direct connections dataframe
+    weatherMatrix = fillDCMatrix(dcDict)
+
+    # nested for loop to replace distance values with randomly generated weather penalty for each route.
+    for i in range(len(weatherMatrix.columns)):
+        for j in range(len(weatherMatrix.index)):
+
+            # Only selecting one have of the matrix since it will eventually be mirrored across the diagonal.  This must be done to prevent the weather penalty from A to B being randomly generated to be different from that of B to A.
+            if i >= j:
+                distance = weatherMatrix.at[weatherMatrix.index[j], weatherMatrix.columns[i]]
+                severity = routeWeather(sliderValue)
+
+                if pd.isna(distance):
+                    continue
+
+                weatherMatrix.at[weatherMatrix.index[j], weatherMatrix.columns[i]] = severity
+                weatherMatrix.at[weatherMatrix.index[i], weatherMatrix.columns[j]] = severity
+
+    return weatherMatrix
+
+
+def totalRouteCost(distanceMatrix, weatherPenaltyMatrix):
+    """
+    This function takes in a direct connections distance dataframe and direct connections weather penalty dataframe. Then it outputs a total route cost dataframe that stores the cost of each individual direct connection.
+    :param p1: distanceMatrix.
+    :type p1: dataframe.
+    :param p2: weatherPenaltyMatrix.
+    :type p2: dataframe.
+    :return: dataframe of direct connection costs.
+    """
+    # Checking to make sure that the cities along the header and indices is the same for both the weather and the distance matrix
+    if distanceMatrix.columns.tolist() != weatherPenaltyMatrix.columns.tolist() and distanceMatrix.index.tolist() != weatherPenaltyMatrix.index.tolist():
+        print('distance matrix is incompatible with weather matrix')
+        sys.exit(-1)
+
+    # Storing headers
+    cols = distanceMatrix.columns
+    # Storing indices
+    rows = distanceMatrix.index
+    # Creating copy of distanceMatrix to overwrite with total costs
+    routeCostMatrix = distanceMatrix
+
+    # Nested for loops to replace value in dataframe with the route cost (distance * weather penalty)
+    for i in range(len(cols)):
+        for j in range(len(rows)):
+            distance = distanceMatrix.at[distanceMatrix.index[j], distanceMatrix.columns[i]]
+            if pd.isna(distance):
+                continue
+
+            penalty = weatherPenaltyMatrix.at[weatherPenaltyMatrix.index[j], weatherPenaltyMatrix.columns[i]]
+            routeCost = distance * penalty
+            routeCostMatrix.at[routeCostMatrix.index[j], routeCostMatrix.columns[i]] = routeCost
+
+    return routeCostMatrix
