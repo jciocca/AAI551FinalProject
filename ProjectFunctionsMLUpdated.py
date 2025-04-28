@@ -135,3 +135,147 @@ def bearingPenalty(bearingToStop, bearingToDest):
         penaltyMultiplier = (diff / 180) + 2
         
     return penaltyMultiplier
+
+
+def minPath(coordsDF, dcMatrix, current, destination):
+    """
+    This function takes in a dataframe of cities and their coordinates, a dataframe filled with direct connections travel costs, an origin city, and a destination city.  Using Dijkstra's Algorithm, it returns a list showing the optimal route in the sequence that the cities are traveled to and the total cost of the trip.  It also detects when the destination city is available to be traveled to and records the cost of traveling directly there even if there is a lower cost option available.  This allows the function to compare the Djikstra's Algorithm result to offshoot routes and chooses the lowest cost possibility.
+    :param p1: coordsDF.
+    :type p1: dataframe.
+    :param p2: dcMatrix.
+    :type p2: dataframe.
+    :param p3: current.
+    :type p3: string.
+    :param p4: destination.
+    :type p4: string.
+    :return: tuple of total cost and route as a list.
+    """  
+    # Obtain coordinates of destination city and create cityCoords class object
+    destLat = coordsDF.loc[destination, 'lat']
+    destLong = coordsDF.loc[destination, 'lng']
+    destination = cc.cityCoords(destination, destLat, destLong)
+    
+    # Initialize total route cost 
+    total = 0    
+    
+    # Initialize empty set of stops along the route
+    stops = set()   
+    
+    # Initialize route list with current city at the first index position since you must start in the origin city.
+    route = [current]    
+    
+    # Initialize empty skip to end routes list and cost of those routes to track offshoot routes that may be better than strictly following Djikstra's Algorithm.
+    skipToEndRoutesList = []
+    skipToEndRoutesCost = []
+    
+    # Entering while loop that will not end until the route brings you to the destination city.    
+    while current != destination.getName():
+        
+        # Initializing shortest leg cost to infinity
+        shortestLeg = math.inf 
+        
+        # Obtaining the coordinates of the current city and using them to create a cityCoords class object
+        currentLat = coordsDF.loc[current, 'lat']
+        currentLong = coordsDF.loc[current, 'lng']
+        
+        # setting the starting point variable as a cityCoords class object.
+        startingPoint = cc.cityCoords(current, currentLat, currentLong)
+        
+        # Adding the starting point city to the set of stops
+        stops.add(startingPoint.getName())
+        
+        # for loop to iterate through cities in the direct connection dataframe.
+        for i in dcMatrix.columns:            
+            # print(f'checking node {startingPoint} to node {i}')  
+            
+            # checking to see if the cities have a direct connection.
+            unconnected = pd.isna(dcMatrix.loc[startingPoint.getName(), i])
+            
+            # Checking to see if the city being evaluated is directly connected or has already been traveled to along the route.
+            if i in stops or unconnected:
+                # print(f'node {i} disqualified, been there already')
+                continue
+            
+            # creating cityCoords class object of the candidate city being evaluated.            
+            candidateLat = coordsDF.loc[i, 'lat']
+            candidateLong = coordsDF.loc[i, 'lng']
+            candidate = cc.cityCoords(i, candidateLat, candidateLong)            
+            
+            # Obtaining the cost of traveling on this direct connection link.
+            dcDistance = dcMatrix.loc[startingPoint.getName(), i]
+            
+            # Using the cityCoords class objects to calculated the bearing angles between them and assign a penalty based on the difference in bearings being evaluated w.r.t. the ideal bearing.
+            bearingToStop = bearingAngle(startingPoint, candidate)
+            bearingToDest = bearingAngle(startingPoint, destination)            
+            directionPenalty = bearingPenalty(bearingToStop, bearingToDest)
+            
+            # Updating the direct connection cost to account for the direction penalty
+            dcDistance = dcDistance * directionPenalty
+            # print(f'Currently in {startingPoint.getName()}, evaluating connection to {candidate.getName()}')
+            # print(f'Bearing Penalty --> {directionPenalty}')
+            
+            # Checking whether the city being evaluated is the destination city.  This allows the function to track the total cost of the route if the user were to go directly to the end instead of potentially following Djikstra's Algorithm to a different lower cost connection.
+            if i == destination.getName():
+                print('\nit is possible to jump directly to the destination')
+                # Calculating the total cost of going directly to the end.
+                skipToEndCost = round(total + dcDistance, 0)
+                # Appending the total cost of this offshoot route to the skipToEndRoutesCost list
+                skipToEndRoutesCost.append(skipToEndCost)
+                # Creating the offshoot route list if the user were to go directly to the end.
+                skipToEndRoute = route + [i]
+                # Appending the offshoot route to the list of offshoot skip to end routes
+                skipToEndRoutesList.append(skipToEndRoute)                
+            
+            # If the connection being evaluated is cheaper than the current cheapest connection, it surpasses it and becomes the new best option to beat.                
+            if dcDistance < shortestLeg:  
+                current = i            
+                shortestLeg = dcDistance
+                
+                # print(f'Node {startingPoint} to node {current} seems to be best path forward')                
+        
+        # If statement to detect when the algorithm recommends that the user leave the current city and go to another stop.
+        if startingPoint.getName() != current:
+            # Appending the next stop in the route to the route list.
+            route.append(current)
+            # Incrementing the total cost by the cost of this individual connection.
+            total += shortestLeg
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+            print(f'{startingPoint} -----> {current}........Leg Distance: {shortestLeg}.....Cumulative route cost: {total}')
+            print(f'Route thus far is: {route}')
+            print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
+            # time.sleep(2)
+        
+        # Else statement to back track in the event that the algorithm gets stuck in a city because it is prevented from traveling to a city it has already been to and all possible connections it has have already been visited.
+        else:
+            print(f'\n||||||||||||||||||||||stuck in {current}|||||||||||||||||||||||||||\n')
+            print(f'Removing {route[-1]} from recommended route')
+            eliminatedCity = current
+            # removing the current city from the route list since visiting it results in getting stuck.
+            route.pop()     
+            # reverting to the city that the user was in before going to the city the algorithm got stuck in.
+            current = route[-1]
+            print(f'Reverting to {current} with {eliminatedCity} no longer an available option\n')            
+            # time.sleep(2)
+    
+    # Rounding the total cost
+    total = round(total, 0)
+    
+    # Obtaining the minimum cost of the offshoot routes
+    minSkipRouteCost = min(skipToEndRoutesCost)  
+    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+    print(skipToEndRoutesCost)
+    print(skipToEndRoutesList)
+    print(f'Min skip route cost = {minSkipRouteCost}')
+    print('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+    
+    # checking whether the best offshoot route is better than the Djikstra's Algorithm route.
+    if minSkipRouteCost < total:
+        print('\nBetter route available by skipping to end')
+        # overwriting the route list and the total cost with the best offshoot option.
+        route = skipToEndRoutesList[skipToEndRoutesCost.index(minSkipRouteCost)]
+        total = minSkipRouteCost       
+    
+    print('\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!') 
+    print(f'You have arrived at your destination.  Total distance traveled: {total}\n')
+
+    return total, route
