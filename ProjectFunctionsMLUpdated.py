@@ -279,3 +279,31 @@ def minPath(coordsDF, dcMatrix, current, destination):
     print(f'You have arrived at your destination.  Total distance traveled: {total}\n')
 
     return total, route
+
+
+def optRoute(coordsDF, dcMatrix, current, destination):
+    """
+    This function calls the minPath function and passes a direct connections dataframe, origin city, and destination city to it.  It evaluates the optimal route in the forward (origin to destination) and reverse (destination to origin) directions.  It compares these 2 options and returns data for the  lowest travel cost option.
+    :param p1: coordsDF.
+    :type p1: dataframe.
+    :param p2: dcMatrix.
+    :type p2: dataframe.
+    :param p3: current city.
+    :type p3: string.
+    :param p4: destination city.
+    :type p4: string.
+    :return: tuple of total cost and route as a list.
+    """
+    # checking cost of route in the forward direction (i.e., origin to destination)
+    totalDistF, routeF = minPath(coordsDF, dcMatrix, current, destination)
+    # checking cost of route in the backwards direction (i.e., destination to origin)
+    totalDistR, routeR = minPath(coordsDF, dcMatrix, destination, current)
+    # reversing list of cities encountered along route for backwards trip
+    routeR.reverse()
+
+    # if/else statements to return the lowest cost route since Djikstra's algorith can potentially miss better routes by blindly choosing the lowest cost option at each turn.
+    if totalDistF < totalDistR:
+        return totalDistF, routeF
+
+    else:
+        return totalDistR, routeR
