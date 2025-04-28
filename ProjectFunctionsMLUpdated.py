@@ -53,3 +53,26 @@ def originDestination(dcDict):
         destination = input('Select your destination: ')
 
     return origin, destination
+
+
+def fillDCMatrix(dcDict):
+    """
+    This function takes in a nested dictionary of cities and the travel costs of the direct connections available to each city.  It outputs a dataframe of the travel cost between each city with 'Nan' values for unconnected cities.
+    :param p1: dcDict.
+    :type p1: dictionary.
+    :return: dataframe.
+    """
+    # Extracting cities from nested dictionary to be stored in list
+    cities = [key for key in dcDict.keys()]
+    # Using list of cities to create dataframe with cities as indices and headers
+    df = pd.DataFrame(index=[i for i in cities], columns=[j for j in cities])
+
+    # Nested for loops to fill the dataframe with distances between directly connected cities.
+    for outerkey in dcDict.keys():
+        innerDict = dcDict[outerkey]
+
+        for innerKey in innerDict.keys():
+            distance = innerDict[innerKey]
+            df.at[outerkey, innerKey] = distance
+
+    return df
