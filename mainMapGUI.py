@@ -283,5 +283,36 @@ confirmSliderButton = (tk.Button
 )
 confirmSliderButton.place(relx=0.3, rely=0.63, anchor="center")
 
+""" ------------------------------- Reset Button -----------------------------------------------"""
+def reset():
+    #set start city, destination city, and slider to none/0
+    start_entry.delete(0, tk.END)
+    destination_entry.delete(0, tk.END)
+    my_slider.set(0)
+    outputText.config(text="Choose a route to see your result.") #update final output to be empty again
+
+    #clear city names. need to declared as global so the program accesses the correct values
+    #and does not create new local variables
+    global first_city_clicked, second_city_clicked
+    first_city_clicked = None
+    second_city_clicked = None
+
+    print("Reset successful.")
+
+    #reset arrows
+    canvas.delete("all")
+    canvas.create_image(0, 0, anchor="nw", image=photo)
+    canvas.image_refs.clear()
+
+#create reset button
+reset_button = (tk.Button
+               (
+                right_frame,
+                text="Reset",
+                bg="#FAF9F6",
+                command=reset
+               ))
+reset_button.place(relx=0.45, rely=0.95, anchor="center")
+
 """ ------------------------------- Run program -----------------------------------------------------"""
 window.mainloop()
