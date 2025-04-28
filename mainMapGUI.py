@@ -314,5 +314,17 @@ reset_button = (tk.Button
                ))
 reset_button.place(relx=0.45, rely=0.95, anchor="center")
 
+""" ------------------------------- Quit Button -----------------------------------------------"""
+
+#add quit button
+quitButton = (tk.Button
+            (
+                right_frame,
+                text ="Quit",
+                bg="#FAF9F6",
+                command=window.destroy
+            ))
+quitButton.place(relx=0.8, rely=.95, anchor="center")
+
 """ ------------------------------- Run program -----------------------------------------------------"""
 window.mainloop()
